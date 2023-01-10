@@ -16,13 +16,13 @@ client.connect();
 
 app.use(express.json());
 
-app.get('/tickets', async (req, res) => {
+app.get('/api/tickets', async (req, res) => {
     try {
         const data = await client.query('SELECT * FROM tickets');
 
         res.status(200).json({
-            status: "succes",
-            data: data.rows
+            status: "success",
+            data: { post: data.rows }
         })
     }
 
@@ -34,30 +34,80 @@ app.get('/tickets', async (req, res) => {
     }
 });
 
-app.get('/tickets/:id', async (req, res) => {
+app.get('/api/tickets/:id', async (req, res) => {
     const id = req.params.id;
 
     try {
         const data = await client.query('SELECT * FROM tickets where id = $1', [id]);
 
-        res.json(data.rows);
+        res.status(200).json({
+            status: "success",
+            data: { post: data.rows }
+        })
     }
+
     catch (err) {
-        console.log(err.stack)
+        res.status(404).json({
+            status: "not found",
+            data: null
+        })
     }
 });
 
-app.post('/tickets', async (req, res) => {
-    console.log(req.body);
+app.post('/api/tickets', async (req, res) => {
 
     try {
         const message = req.body.message;
 
-        console.log(message);
-        const data = await client.query('INSERT INTO tickets (message) VALUES ($1)', [message]);
+        const data = await client.query('INSERT INTO tickets (message) VALUES ($1) returning *', [message]);
+
+        res.status(201).json({
+            status: "created",
+            data: { post: data.rows }
+        })
+    }
+
+    catch (err) {
+        res.status(404).json({
+            status: "not found",
+            data: null
+        })
+    }
+});
+
+app.put('/api/tickets/:id', async (req, res) => {
+    const id = req.params.id;
+    const message = req.body.message;
+
+    const data = await client.query('UPDATE tickets SET (message, done) = ($2, true) WHERE id = $1 returning *', [id, message]);
+
+    try {
+        if (data.rowCount === 1) {
+        res.status(200).json({
+            status: "success",
+            data: { post: data.rows }
+
+        })
+    }}
+
+    catch (err) {
+        res.status(404).json({
+            status: "not found",
+            data: null
+        })
+    }
+});
+
+
+app.delete('/api/tickets/:id', async (req, res) => {
+
+    const id = req.params.id;
+
+    try {
+        const data = await client.query('SELECT * FROM tickets where id = $1', [id]);
 
         res.status(200).json({
-            status: "succes",
+            status: "deleted",
             data: data.rows
         })
     }
@@ -70,28 +120,6 @@ app.post('/tickets', async (req, res) => {
     }
 });
 
-app.delete('/tickets/:id', async (req, res) => {
-    console.log(req.params)
-
-    const id = req.params.id;
-
-    try {
-        const data = await client.query('SELECT * FROM tickets where id = $1', [id]);
-
-        res.status(200).json({
-            status: "succes",
-            data: data.rows
-        })
-    }
-
-    catch (err) {
-        res.status(404).json({
-            status: "not found",
-            data: null
-        })
-    }
-})
-
 app.listen(port, () => {
     console.log(`Example app listening on port:${port}`)
-})
+});
