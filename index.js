@@ -79,16 +79,15 @@ app.put('/api/tickets/:id', async (req, res) => {
     const id = req.params.id;
     const message = req.body.message;
 
-    const data = await client.query('UPDATE tickets SET (message, done) = ($2, true) WHERE id = $1 returning *', [id, message]);
-
     try {
-        if (data.rowCount === 1) {
+        const data = await client.query('UPDATE tickets SET (message, done) = ($2, true) WHERE id = $1 returning *', [id, message]);
+        
         res.status(200).json({
             status: "success",
             data: { post: data.rows }
 
         })
-    }}
+    }
 
     catch (err) {
         res.status(404).json({
