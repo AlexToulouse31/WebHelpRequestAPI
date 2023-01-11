@@ -103,7 +103,7 @@ app.delete('/api/tickets/:id', async (req, res) => {
     const id = req.params.id;
 
     try {
-        const data = await client.query('SELECT * FROM tickets where id = $1', [id]);
+        const data = await client.query('DELETE FROM tickets where id = $1', [id]);
 
         res.status(200).json({
             status: "deleted",
